@@ -57,12 +57,17 @@ typedef struct ALIGNED packet_position_s {
 
 int receive_packet(int socket, void* packet, size_t size);
 
-void send_move_packet(int socket, uint32_t player_id, float x, float y);
+void send_move_packet(int socket, uint32_t player_id, float x, float y,
+                        struct sockaddr_in *addr, socklen_t addr_len);
 
-void send_message_packet(int socket, const char *message);
+void send_message_packet(int socket, struct sockaddr_in *addr,
+            socklen_t addr_len, const char *message);
 
-void send_new_player_packet(int socket, uint32_t player_id, float x, float y);
+void send_new_player_packet(int socket, uint32_t player_id, float x, float y,
+                            struct sockaddr_in *addr, socklen_t addr_len);
 
-void send_player_info_packet(int socket, const char *name);
+void send_player_info_packet(int socket, const char *name,
+                            struct sockaddr_in *addr, socklen_t addr_len);
 
-void send_player_position_packet(int socket, float x, float y);
+void send_player_position_packet(int socket, float x, float y,
+                                struct sockaddr_in *addr, socklen_t addr_len);

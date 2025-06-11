@@ -3,19 +3,21 @@
 #include <time.h>
 #include <errno.h>
 
-void send_message_packet(int socket, const char *message) {
+void send_message_packet(int socket, struct sockaddr_in *addr,
+            socklen_t addr_len, const char *message) {
     packet_message_t packet;
     packet.header.type = PACKET_TYPE_MESSAGE;
     packet.header.size = sizeof(packet_message_t);
     packet.timestamp = (uint32_t)time(NULL);
     snprintf(packet.message, sizeof(packet.message), "%s\n", message);
 
-    if (send(socket, &packet, sizeof(packet), 0) == -1) {
-        perror("send");
+    if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
+        perror("sendto");
     }
 }
 
-void send_move_packet(int socket, uint32_t player_id, float x, float y) {
+void send_move_packet(int socket, uint32_t player_id, float x, float y,
+                      struct sockaddr_in *addr, socklen_t addr_len) {
     packet_move_t packet;
     packet.header.type = PACKET_TYPE_MOVE;
     packet.header.size = sizeof(packet_move_t);
@@ -23,12 +25,13 @@ void send_move_packet(int socket, uint32_t player_id, float x, float y) {
     packet.x = x;
     packet.y = y;
 
-    if (send(socket, &packet, sizeof(packet), 0) == -1) {
+    if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
         perror("send");
     }
 }
 
-void send_new_player_packet(int socket, uint32_t player_id, float x, float y) {
+void send_new_player_packet(int socket, uint32_t player_id, float x, float y,
+                            struct sockaddr_in *addr, socklen_t addr_len) {
     packet_new_player_t packet;
     packet.header.type = PACKET_TYPE_NEW_PLAYER;
     packet.header.size = sizeof(packet_new_player_t);
@@ -36,29 +39,31 @@ void send_new_player_packet(int socket, uint32_t player_id, float x, float y) {
     packet.x = x;
     packet.y = y;
 
-    if (send(socket, &packet, sizeof(packet), 0) == -1) {
+    if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
         perror("send");
     }
 }
 
-void send_player_info_packet(int socket, const char *name) {
+void send_player_info_packet(int socket, const char *name,
+                                struct sockaddr_in *addr, socklen_t addr_len) {
     packet_player_info_t packet;
     packet.header.type = PACKET_TYPE_PLAYER_INFO;
     packet.header.size = sizeof(packet_player_info_t);
     snprintf(packet.name, sizeof(packet.name), "%s\n", name);
 
-    if (send(socket, &packet, sizeof(packet), 0) == -1) {
+    if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
         perror("send");
     }
 }
 
-void send_player_position_packet(int socket, float x, float y) {
+void send_player_position_packet(int socket, float x, float y,
+                                    struct sockaddr_in *addr, socklen_t addr_len) {
     packet_position_t packet;
     packet.header.type = PACKET_TYPE_PLAYER_POSITION;
     packet.header.size = sizeof(packet_position_t);
     packet.x = x;
     packet.y = y;
-    if (send(socket, &packet, sizeof(packet), 0) == -1) {
+    if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
         perror("send");
     }
 }

@@ -22,74 +22,61 @@ int error_handling(server_t *server)
         printf("Error binding socket\n");
         return 84;
     }
-    if (listen(server->fd, SOMAXCONN) == -1) {
-        printf("Error listening\n");
-        return 84;
-    }
     return 0;
 }
 
 static
-void accept_client(server_t *server, int client_fd)
+int find_or_create_client(server_t *server, struct sockaddr_in *addr, socklen_t addr_len)
 {
-    int idx = define_index(server);
-
-    server->fds[idx].fd = client_fd;
-    server->fds[idx].events = POLLIN;
-    server->clients[idx] = malloc(sizeof(client_t));
-    init_client_struct(server->clients[idx], client_fd, server);
-    if (idx == server->nfds)
-        server->nfds++;
-    server->player_count++;
-    server->player_ids++;
-    printf("Client connecté (fd=%d, total clients: %d)\n", client_fd, server->player_count);
-}
-
-void disconnect_client(server_t *server, int idx)
-{
-    if (server->clients[idx] != NULL) {
-        printf("Client déconnecté (fd=%d)\n", server->clients[idx]->fd);
-        close(server->clients[idx]->fd);
-        free(server->clients[idx]);
-        server->clients[idx] = NULL;
-        server->fds[idx].fd = -1;
-        server->player_count--;
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (server->clients[i] && memcmp(&server->clients[i]->addr, addr, sizeof(struct sockaddr_in)) == 0) {
+            return i;
+        }
     }
-}
-
-int get_new_connection(server_t *server)
-{
-    struct sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
-    int client_fd = 0;
-
-    if (server->fds[0].revents & POLLIN) {
-        client_fd = accept(server->fd, (struct sockaddr *)&addr,
-            &addr_len);
-        if (client_fd == -1)
-            return 84;
-        if (server->fds == NULL || server->clients == NULL)
-            return 84;
-        accept_client(server, client_fd);
-        send_message_packet(client_fd, "Hello from Server!");
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (server->clients[i] == NULL) {
+            server->clients[i] = malloc(sizeof(client_t));
+            server->clients[i]->addr = *addr;
+            server->clients[i]->addr_len = addr_len;
+            server->clients[i]->connected = true;
+            server->clients[i]->player_id = server->player_ids++;
+            server->clients[i]->x = 0.0f;
+            server->clients[i]->y = 10.0f;
+            server->player_count++;
+            printf("Nouveau client enregistré (player_id=%d, total=%d)\n", server->clients[i]->player_id, server->player_count);
+            return i;
+        }
     }
-    return 0;
+    return -1;
 }
 
 static
 int server_loop(server_t *server) {
+    struct pollfd fds[1];
+    fds[0].fd = server->fd;
+    fds[0].events = POLLIN;
+
     while (1) {
-        if (poll(server->fds, server->nfds, 1000) < 0) {
+        if (poll(fds, 1, 10) < 0) {
             perror("poll");
             return 84;
         }
-        if (get_new_connection(server) == 84)
-            return 84;
-        for (int i = 1; i < server->nfds; i++) {
-            if (server->fds[i].fd != -1 && (server->fds[i].revents & POLLIN)) {
-                if (handle_client_data(server, i) == 84)
-                    return 84;
+        if (fds[0].revents & POLLIN) {
+            struct sockaddr_in client_addr;
+            socklen_t addr_len = sizeof(client_addr);
+            char buffer[2048];
+            ssize_t recv_len = recvfrom(server->fd, buffer, sizeof(buffer), 0,
+                                        (struct sockaddr *)&client_addr, &addr_len);
+            if (recv_len < (ssize_t)sizeof(packet_t)) {
+                printf("Paquet trop petit reçu\n");
+                continue;
             }
+            int idx = find_or_create_client(server, &client_addr, addr_len);
+            if (idx == -1) {
+                printf("Trop de clients connectés\n");
+                continue;
+            }
+            handle_client_data(server, idx, buffer, recv_len);
         }
     }
 }
@@ -101,7 +88,6 @@ int main(void) {
     if (error_handling(server) == 84)
         return 84;
     printf("Serveur démarré sur le port 7777\n");
-    printf("En attente de connexions clients...\n");
     server_loop(server);
     free(server);
     return 0;

@@ -10,11 +10,13 @@ void check_events(client_t *client) {
     }
     if (IsKeyDown(KEY_RIGHT)) {
         client->players[client->id]->x += client->players[client->id]->speed;
-        send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y);
+        send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y,
+                                    &client->addr, client->addr_len);
     }
     if (IsKeyDown(KEY_LEFT)) {
         client->players[client->id]->x -= client->players[client->id]->speed;
-        send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y);
+        send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y,
+                                    &client->addr, client->addr_len);
     }
 }
 

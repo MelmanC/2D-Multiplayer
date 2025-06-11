@@ -9,7 +9,7 @@
 #include <errno.h>
 
 int init_client_struct(client_t *client) {
-    client->socket = socket(AF_INET, SOCK_STREAM, 0);
+    client->socket = socket(AF_INET, SOCK_DGRAM, 0); // UDP
     if (client->socket == -1) {
         perror("socket");
         return 84;
@@ -58,14 +58,10 @@ int main(void) {
         free(client);
         return ERROR;
     }
-    printf("Connexion au serveur %s:%d...\n", IP, PORT);
-    if (connect(client->socket, (struct sockaddr *)&client->addr, client->addr_len) == -1) { 
-        perror("connect");
-        return ERROR;
-    }
-    printf("Connecté au serveur!\n");
-    send_message_packet(client->socket, "Hello from Client!");
-    send_player_info_packet(client->socket, "New Player");
+    printf("Socket UDP prêt pour %s:%d\n", IP, PORT);
+
+    send_message_packet(client->socket, &client->addr, client->addr_len, "Hello from Client!");
+    send_player_info_packet(client->socket, "New Player", &client->addr, client->addr_len);
     pthread_create(&client->thread, NULL, server_loop, client);
     game_loop(client);
     pthread_join(client->thread, NULL);

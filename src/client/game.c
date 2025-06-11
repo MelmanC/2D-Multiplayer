@@ -40,5 +40,6 @@ int game_loop(client_t *client) {
 
     }
     CloseWindow();
+    // TODO: Disconnect from server and clean up resources
     return 0;
 }

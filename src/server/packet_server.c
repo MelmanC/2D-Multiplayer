@@ -48,6 +48,7 @@ int handle_client_data(server_t *server, int idx, char *buffer, unsigned long re
             packet_message_t *message_packet = (packet_message_t *)buffer;
             message_packet->header = *header;
 
+            printf("Message reçu de %d: %s", idx, message_packet->message);
             break;
         }
         case PACKET_TYPE_PLAYER_INFO: {

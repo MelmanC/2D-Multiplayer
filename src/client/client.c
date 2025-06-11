@@ -18,31 +18,57 @@ int init_client_struct(client_t *client) {
     client->addr.sin_port = htons(PORT);
     client->addr.sin_addr.s_addr = inet_addr(IP);
     client->addr_len = sizeof(client->addr);
+    client->players = malloc(sizeof(player_t *) * MAX_PLAYERS);
+    client->thread = 0;
+    client->running = 1;
+    client->id = 843;
     return 0;
 }
 
-void server_loop(client_t *client) {
-    while (1) {
-        if (handle_server_packet(client->socket) == 84) {
-            break;
-        }
+void create_player(client_t *client, uint32_t id, packet_new_player_t *new_player_packet) {
+    player_t *player = malloc(sizeof(player_t));
+    if (player == NULL) {
+        perror("malloc");
+        return;
     }
+    player->id = id;
+    player->x = new_player_packet->x;
+    player->y = new_player_packet->y;
+    player->speed = 10.0f;
+    client->players[id] = player;
+    if (client->id == 843) {
+        client->id = id;
+    }
+}
+
+void *server_loop(void *arg) {
+    client_t *client = (client_t *)arg;
+    while (client->running) {
+        if (handle_server_packet(client->socket, client) == 84)
+            break;
+    }
+    close(client->socket);
+    return NULL;
 }
 
 int main(void) {
     client_t *client = malloc(sizeof(client_t));
+
     if (init_client_struct(client) == 84) {
         free(client);
-        return 84;
+        return ERROR;
     }
     printf("Connexion au serveur %s:%d...\n", IP, PORT);
     if (connect(client->socket, (struct sockaddr *)&client->addr, client->addr_len) == -1) { 
         perror("connect");
-        return 84;
+        return ERROR;
     }
     printf("Connecté au serveur!\n");
     send_message_packet(client->socket, "Hello from Client!");
-    server_loop(client);
+    send_player_info_packet(client->socket, "New Player");
+    pthread_create(&client->thread, NULL, server_loop, client);
+    game_loop(client);
+    pthread_join(client->thread, NULL);
     close(client->socket);
     free(client);
     return 0;

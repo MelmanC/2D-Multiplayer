@@ -2,6 +2,19 @@
 #include "client.h"
 #include "packet.h"
 #include <unistd.h>
+#include <stdio.h>
+
+static
+void update_position(client_t *client) {
+    client->sequence_number++;
+    int idx = client->input_end % BUFFER_SIZE;
+    client->input[idx].sequence_number = client->sequence_number;
+    client->input[idx].x = client->players[client->id]->x;
+    client->input[idx].y = client->players[client->id]->y;
+    client->input_end++;
+    send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y,
+        client->sequence_number, &client->addr, client->addr_len);
+}
 
 static
 void check_events(client_t *client) {
@@ -10,13 +23,11 @@ void check_events(client_t *client) {
     }
     if (IsKeyDown(KEY_RIGHT)) {
         client->players[client->id]->x += client->players[client->id]->speed;
-        send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y,
-                                    &client->addr, client->addr_len);
+        update_position(client);
     }
     if (IsKeyDown(KEY_LEFT)) {
         client->players[client->id]->x -= client->players[client->id]->speed;
-        send_player_position_packet(client->socket, client->players[client->id]->x, client->players[client->id]->y,
-                                    &client->addr, client->addr_len);
+        update_position(client);
     }
 }
 

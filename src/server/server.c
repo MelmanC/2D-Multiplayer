@@ -40,7 +40,7 @@ int find_or_create_client(server_t *server, struct sockaddr_in *addr, socklen_t 
             server->clients[i]->addr_len = addr_len;
             server->clients[i]->connected = true;
             server->clients[i]->player_id = server->player_ids++;
-            server->clients[i]->x = 0.0f;
+            server->clients[i]->x = 10.0f;
             server->clients[i]->y = 10.0f;
             server->player_count++;
             printf("Nouveau client enregistré (player_id=%d, total=%d)\n", server->clients[i]->player_id, server->player_count);

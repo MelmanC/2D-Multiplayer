@@ -62,15 +62,16 @@ int handle_client_data(server_t *server, int idx, char *buffer, unsigned long re
         case PACKET_TYPE_PLAYER_POSITION: {
             packet_position_t *player_move = (packet_position_t *)buffer;
             player_move->header = *header;
-
             client_t *cli = server->clients[idx];
             if (cli) {
                 cli->x = player_move->x;
                 cli->y = player_move->y;
                 for (int i = 0; i < server->player_ids; i++) {
                     if (server->clients[i] && server->clients[i]->connected) {
+                        usleep(150 * 1000); // Simulate network delay
                         send_move_packet(server->fd,
                             cli->player_id, cli->x, cli->y,
+                            player_move->sequence_number,
                             &server->clients[i]->addr,
                             server->clients[i]->addr_len);
                     }

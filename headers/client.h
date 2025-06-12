@@ -12,6 +12,13 @@
 #define BILLION 1000000
 #define MAX_PLAYERS 5
 #define ERROR 84
+#define BUFFER_SIZE 64
+
+typedef struct {
+    int sequence_number;
+    float x;
+    float y;
+} input_t;
 
 typedef struct player_s {
     uint32_t id;
@@ -28,6 +35,10 @@ typedef struct {
     pthread_t thread;
     atomic_bool running;
     uint32_t id;
+    int sequence_number;
+    input_t input[BUFFER_SIZE];
+    int input_start;
+    int input_end;
 } client_t;
 
 int handle_server_packet(int socket, client_t *client);

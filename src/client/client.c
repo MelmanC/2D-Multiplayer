@@ -9,7 +9,7 @@
 #include <errno.h>
 
 int init_client_struct(client_t *client) {
-    client->socket = socket(AF_INET, SOCK_DGRAM, 0); // UDP
+    client->socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (client->socket == -1) {
         perror("socket");
         return 84;
@@ -22,6 +22,7 @@ int init_client_struct(client_t *client) {
     client->thread = 0;
     client->running = 1;
     client->id = 843;
+    client->sequence_number = 0;
     return 0;
 }
 

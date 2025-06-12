@@ -16,7 +16,7 @@ void send_message_packet(int socket, struct sockaddr_in *addr,
     }
 }
 
-void send_move_packet(int socket, uint32_t player_id, float x, float y,
+void send_move_packet(int socket, uint32_t player_id, float x, float y, int sequence_number,
                       struct sockaddr_in *addr, socklen_t addr_len) {
     packet_move_t packet;
     packet.header.type = PACKET_TYPE_MOVE;
@@ -24,6 +24,7 @@ void send_move_packet(int socket, uint32_t player_id, float x, float y,
     packet.player_id = player_id;
     packet.x = x;
     packet.y = y;
+    packet.sequence_number = sequence_number;
 
     if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
         perror("send");
@@ -56,13 +57,15 @@ void send_player_info_packet(int socket, const char *name,
     }
 }
 
-void send_player_position_packet(int socket, float x, float y,
+void send_player_position_packet(int socket, float x, float y, int sequence_number,
                                     struct sockaddr_in *addr, socklen_t addr_len) {
     packet_position_t packet;
     packet.header.type = PACKET_TYPE_PLAYER_POSITION;
     packet.header.size = sizeof(packet_position_t);
     packet.x = x;
     packet.y = y;
+    packet.sequence_number = sequence_number;
+
     if (sendto(socket, &packet, sizeof(packet), 0, (struct sockaddr *)addr, addr_len) == -1) {
         perror("send");
     }

@@ -31,8 +31,26 @@ int handle_server_packet(int socket, client_t *client) {
             packet_move_t *move_packet = (packet_move_t *)buffer;
             for (int i = 0; i < MAX_PLAYERS; i++) {
                 if (client->players[i] && client->players[i]->id == move_packet->player_id) {
-                    client->players[i]->x = move_packet->x;
-                    client->players[i]->y = move_packet->y;
+                    if (move_packet->player_id == client->id) {
+                        if (move_packet->sequence_number < client->sequence_number)
+                            break;
+                        client->players[i]->x = move_packet->x;
+                        client->players[i]->y = move_packet->y;
+                        client->sequence_number = move_packet->sequence_number;
+
+                        int seq = client->sequence_number + 1;
+                        for (int j = client->input_start; j < client->input_end; j++) {
+                            int idx = j % BUFFER_SIZE;
+                            if (client->input[idx].sequence_number >= seq) {
+                                client->players[i]->x = client->input[idx].x;
+                                client->players[i]->y = client->input[idx].y;
+                            }
+                        }
+                        client->input_start = client->input_end;
+                    } else {
+                        client->players[i]->x = move_packet->x;
+                        client->players[i]->y = move_packet->y;
+                    }
                 }
             }
             break;

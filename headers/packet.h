@@ -30,6 +30,7 @@ typedef struct ALIGNED packet_message_s {
 typedef struct ALIGNED packet_move_s {
     packet_t header;
     uint32_t player_id;
+    int sequence_number;
     float x;
     float y;
 } packet_move_t;
@@ -51,13 +52,14 @@ typedef struct ALIGNED packet_player_info_s {
 /* Client Packets */
 typedef struct ALIGNED packet_position_s {
     packet_t header;
+    int sequence_number;
     float x;
     float y;
 } packet_position_t;
 
 int receive_packet(int socket, void* packet, size_t size);
 
-void send_move_packet(int socket, uint32_t player_id, float x, float y,
+void send_move_packet(int socket, uint32_t player_id, float x, float y, int sequence_number,
                         struct sockaddr_in *addr, socklen_t addr_len);
 
 void send_message_packet(int socket, struct sockaddr_in *addr,
@@ -69,5 +71,5 @@ void send_new_player_packet(int socket, uint32_t player_id, float x, float y,
 void send_player_info_packet(int socket, const char *name,
                             struct sockaddr_in *addr, socklen_t addr_len);
 
-void send_player_position_packet(int socket, float x, float y,
+void send_player_position_packet(int socket, float x, float y, int sequence_number,
                                 struct sockaddr_in *addr, socklen_t addr_len);
